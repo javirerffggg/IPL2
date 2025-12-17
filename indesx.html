@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="IPL Tracker">
+    <meta name="theme-color" content="#0a0e1a">
+    <meta name="description" content="Gestión inteligente de tratamiento IPL offline-first">
+    
+    <title>IPL Tracker - Gestión Inteligente</title>
+    
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/css/styles.css">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
+    
+    <!-- Preconnect para APIs externas -->
+    <link rel="preconnect" href="https://api.open-meteo.com">
+    
+    <!-- Material Icons CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Pantalla de Instalación (iOS) -->
+    <div id="installPrompt" class="install-prompt" style="display: none;">
+        <div class="install-content">
+            <span class="material-icons">add_to_home_screen</span>
+            <h3>Instalar IPL Tracker</h3>
+            <p>Para una mejor experiencia, instala la app:</p>
+            <ol>
+                <li>Toca el botón de <strong>Compartir</strong> <span class="material-icons">ios_share</span></li>
+                <li>Selecciona <strong>"Añadir a pantalla de inicio"</strong></li>
+            </ol>
+            <button id="dismissInstall" class="btn-secondary">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Modal de Onboarding -->
+    <div id="onboardingModal" class="modal" style="display: none;">
+        <div class="modal-content onboarding">
+            <div class="onboarding-step active" data-step="1">
+                <span class="material-icons onboarding-icon">person</span>
+                <h2>¡Bienvenido a IPL Tracker!</h2>
+                <p>Configuremos tu perfil para personalizar tu experiencia</p>
+                <div class="form-group">
+                    <label>Género</label>
+                    <select id="userGender">
+                        <option value="male" selected>Hombre</option>
+                        <option value="female">Mujer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de vello</label>
+                    <select id="hairType">
+                        <option value="thin">Fino/Claro</option>
+                        <option value="medium">Medio</option>
+                        <option value="thick" selected>Grueso/Oscuro</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="nextOnboardingStep()">Continuar</button>
+            </div>
+
+            <div class="onboarding-step" data-step="2">
+                <span class="material-icons onboarding-icon">calendar_today</span>
+                <h2>Disponibilidad</h2>
+                <p>¿Cuándo puedes hacer tus sesiones?</p>
+                <div class="form-group">
+                    <label>
+                        <input type="radio" name="availability" value="weekend" checked>
+                        Solo fines de semana (Sábado + Domingo)
+                    </label>
+                    <label>
+                        <input type="radio" name="availability" value="flexible">
+                        Cualquier día (Personalizar después)
+                    </label>
+                </div>
+                <p class="info-text">
+                    <span class="material-icons">info</span>
+                    Recomendamos el modo "Weekend Split": Piernas el sábado, Torso el domingo
+                </p>
+                <button class="btn-secondary" onclick="prevOnboardingStep()">Atrás</button>
+                <button class="btn-primary" onclick="nextOnboardingStep()">Continuar</button>
+            </div>
+
+            <div class="onboarding-step" data-step="3">
+                <span class="material-icons onboarding-icon">palette</span>
+                <h2>Tipo de Piel (Fitzpatrick)</h2>
+                <p>Selecciona el color que mejor coincida con tu brazo</p>
+                <div id="fitzpatrickSelector" class="fitzpatrick-grid">
+                    <div class="fitz-option" data-type="1" style="background: #f5d7c5;">
+                        <span>I</span>
+                        <small>Muy clara</small>
+                    </div>
+                    <div class="fitz-option" data-type="2" style="background: #edc5a8;">
+                        <span>II</span>
+                        <small>Clara</small>
+                    </div>
+                    <div class="fitz-option" data-type="3" style="background: #d5a47a;" class="selected">
+                        <span>III</span>
+                        <small>Media</small>
+                    </div>
+                    <div class="fitz-option" data-type="4" style="background: #ae7d4f;">
+                        <span>IV</span>
+                        <small>Olivácea</small>
+                    </div>
+                    <div class="fitz-option" data-type="5" style="background: #8b5a3c;">
+                        <span>V</span>
+                        <small>Oscura</small>
+                    </div>
+                    <div class="fitz-option" data-type="6" style="background: #5c3c2e;">
+                        <span>VI</span>
+                        <small>Muy oscura</small>
+                    </div>
+                </div>
+                <p class="info-text">
+                    <span class="material-icons">tips_and_updates</span>
+                    Sube el brillo de tu pantalla al máximo y compara con tu antebrazo
+                </p>
+                <button class="btn-secondary" onclick="prevOnboardingStep()">Atrás</button>
+                <button class="btn-primary" onclick="nextOnboardingStep()">Continuar</button>
+            </div>
+
+            <div class="onboarding-step" data-step="4">
+                <span class="material-icons onboarding-icon">event</span>
+                <h2>Fecha de Inicio</h2>
+                <p>¿Cuándo quieres empezar tu tratamiento?</p>
+                <div class="form-group">
+                    <label>Fecha de primera sesión</label>
+                    <input type="date" id="startDate" min="2025-12-17">
+                </div>
+                <div class="phase-preview">
+                    <h3>Tu Plan Personalizado:</h3>
+                    <div class="phase-item">
+                        <span class="material-icons">flash_on</span>
+                        <div>
+                            <strong>Fase 1: Ataque</strong>
+                            <p>12 semanas - Sesiones semanales</p>
+                        </div>
+                    </div>
+                    <div class="phase-item">
+                        <span class="material-icons">trending_down</span>
+                        <div>
+                            <strong>Fase 2: Transición</strong>
+                            <p>8 semanas - Sesiones quincenales</p>
+                        </div>
+                    </div>
+                    <div class="phase-item">
+                        <span class="material-icons">check_circle</span>
+                        <div>
+                            <strong>Fase 3: Mantenimiento</strong>
+                            <p>Sesiones mensuales</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="prevOnboardingStep()">Atrás</button>
+                <button class="btn-primary" onclick="completeOnboarding()">¡Empezar!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra Superior -->
+    <header class="app-header">
+        <div class="header-left">
+            <h1><span class="material-icons">flash_on</span> IPL Tracker</h1>
+        </div>
+        <div class="header-right">
+            <button id="menuBtn" class="icon-btn">
+                <span class="material-icons">menu</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navegación Principal -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-view="dashboard">
+            <span class="material-icons">home</span>
+            <span>Inicio</span>
+        </button>
+        <button class="nav-item" data-view="calendar">
+            <span class="material-icons">calendar_today</span>
+            <span>Calendario</span>
+        </button>
+        <button class="nav-item" data-view="zones">
+            <span class="material-icons">accessibility_new</span>
+            <span>Zonas</span>
+        </button>
+        <button class="nav-item" data-view="progress">
+            <span class="material-icons">photo_camera</span>
+            <span>Progreso</span>
+        </button>
+        <button class="nav-item" data-view="settings">
+            <span class="material-icons">settings</span>
+            <span>Ajustes</span>
+        </button>
+    </nav>
+    <!-- Contenedor Principal -->
+    <main class="app-main">
+        
+        <!-- VISTA 1: DASHBOARD -->
+        <section id="dashboard" class="view active">
+            <!-- Widget UV -->
+            <div class="card uv-card">
+                <div class="card-header">
+                    <span class="material-icons">light_mode</span>
+                    <h3>Índice UV</h3>
+                </div>
+                <div class="uv-display">
+                    <div id="uvValue" class="uv-value">--</div>
+                    <div id="uvStatus" class="uv-status">Cargando...</div>
+                </div>
+                <div id="uvWarning" class="warning-banner" style="display: none;">
+                    <span class="material-icons">warning</span>
+                    <p>Nivel UV alto. Evita exposición solar antes/después de la sesión.</p>
+                </div>
+            </div>
+
+            <!-- Estado de Misión -->
+            <div class="card mission-card">
+                <div class="card-header">
+                    <span class="material-icons">flag</span>
+                    <h3>Estado del Tratamiento</h3>
+                </div>
+                <div class="mission-status">
+                    <div class="status-row">
+                        <span class="label">Fase Actual:</span>
+                        <span id="currentPhase" class="value phase-attack">ATAQUE</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="label">Semana:</span>
+                        <span id="currentWeek" class="value">4 / 12</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="phaseProgress" class="progress-fill" style="width: 33%;"></div>
+                    </div>
+                    <div class="status-row">
+                        <span class="label">Próximo Protocolo:</span>
+                        <span id="nextProtocol" class="value">HOMBROS (Degradado)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Próxima Sesión -->
+            <div class="card next-session-card">
+                <div class="card-header">
+                    <span class="material-icons">calendar_month</span>
+                    <h3>Próxima Sesión</h3>
+                </div>
+                <div class="next-session">
+                    <div class="session-date">
+                        <span id="nextDay" class="day">SÁBADO</span>
+                        <span id="nextDate" class="date">21 DIC</span>
+                    </div>
+                    <div class="session-details">
+                        <h4 id="nextTarget">TREN INFERIOR</h4>
+                        <p id="nextZones">Piernas + Glúteos</p>
+                        <div class="session-prep">
+                            <span class="material-icons">info</span>
+                            <small>Recuerda rasurar el viernes por la noche</small>
+                        </div>
+                    </div>
+                </div>
+                <button id="startSessionBtn" class="btn-primary btn-large">
+                    <span class="material-icons">play_arrow</span>
+                    Iniciar Sesión
+                </button>
+            </div>
+
+            <!-- Estado del Dispositivo -->
+            <div class="card device-card">
+                <div class="card-header">
+                    <span class="material-icons">devices</span>
+                    <h3>Dispositivo IPL</h3>
+                </div>
+                <div class="device-status">
+                    <div class="status-item">
+                        <span class="material-icons status-ready">battery_charging_full</span>
+                        <div>
+                            <strong>Batería</strong>
+                            <p id="deviceBattery">98% - Listo</p>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <span class="material-icons">tungsten</span>
+                        <div>
+                            <strong>Disparos Restantes</strong>
+                            <p id="shotsRemaining">~285,000</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas Rápidas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="material-icons">event_available</span>
+                    <div class="stat-value" id="totalSessions">0</div>
+                    <div class="stat-label">Sesiones</div>
+                </div>
+                <div class="stat-card">
+                    <span class="material-icons">schedule</span>
+                    <div class="stat-value" id="totalTime">0h</div>
+                    <div class="stat-label">Tiempo Total</div>
+                </div>
+                <div class="stat-card">
+                    <span class="material-icons">local_fire_department</span>
+                    <div class="stat-value" id="totalShots">0</div>
+                    <div class="stat-label">Disparos</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA 2: CALENDARIO -->
+        <section id="calendar" class="view">
+            <div class="calendar-header">
+                <button id="prevMonth" class="icon-btn">
+                    <span class="material-icons">chevron_left</span>
+                </button>
+                <h2 id="calendarMonth">Diciembre 2025</h2>
+                <button id="nextMonth" class="icon-btn">
+                    <span class="material-icons">chevron_right</span>
+                </button>
+            </div>
+
+            <!-- Leyenda -->
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <span class="legend-icon legs">🦵</span>
+                    <span>Tren Inferior</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon torso">👕</span>
+                    <span>Torso</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon shoulders">💪</span>
+                    <span>+ Hombros</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon rest">💤</span>
+                    <span>Descanso</span>
+                </div>
+            </div>
+
+            <!-- Grid del Calendario -->
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Se genera dinámicamente con JavaScript -->
+            </div>
+
+            <!-- Detalles de Sesión Seleccionada -->
+            <div id="sessionDetails" class="card session-details" style="display: none;">
+                <div class="card-header">
+                    <h3 id="detailDate">Sábado 21 Diciembre</h3>
+                    <button id="closeDetails" class="icon-btn">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                <div id="detailContent">
+                    <!-- Contenido dinámico -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA 3: ASISTENTE DE ZONAS -->
+        <section id="zones" class="view">
+            <div class="card">
+                <div class="card-header">
+                    <span class="material-icons">accessibility_new</span>
+                    <h3>Mapa Corporal</h3>
+                </div>
+                <p class="section-description">Toca una zona para ver configuración y técnica recomendada</p>
+            </div>
+
+            <!-- SVG del Cuerpo -->
+            <div class="body-map-container">
+                <svg id="bodyMap" viewBox="0 0 300 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Cabeza -->
+                    <circle cx="150" cy="40" r="25" fill="#1a1f35" stroke="#00d9ff" stroke-width="2"/>
+                    
+                    <!-- Cuello -->
+                    <rect x="140" y="65" width="20" height="15" fill="#1a1f35" stroke="#00d9ff" stroke-width="1"/>
+                    
+                    <!-- Hombros (Zona Clave - Degradado) -->
+                    <g id="zone-shoulders" class="body-zone clickable">
+                        <ellipse cx="115" cy="95" rx="30" ry="20" fill="#2a3f5f" stroke="#ffa500" stroke-width="3" class="zone-highlight"/>
+                        <ellipse cx="185" cy="95" rx="30" ry="20" fill="#2a3f5f" stroke="#ffa500" stroke-width="3" class="zone-highlight"/>
+                        <text x="150" y="100" text-anchor="middle" fill="white" font-size="20">💪</text>
+                    </g>
+                    
+                    <!-- Brazos -->
+                    <g id="zone-arms" class="body-zone clickable">
+                        <rect x="85" y="95" width="15" height="80" rx="7" fill="#1a1f35" stroke="#00d9ff" stroke-width="2"/>
+                        <rect x="200" y="95" width="15" height="80" rx="7" fill="#1a1f35" stroke="#00d9ff" stroke-width="2"/>
+                    </g>
+                    
+                    <!-- Pecho -->
+                    <g id="zone-chest" class="body-zone clickable">
+                        <rect x="110" y="80" width="80" height="60" rx="10" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                        <text x="150" y="115" text-anchor="middle" fill="white" font-size="20">👕</text>
+                    </g>
+                    
+                    <!-- Abdomen -->
+                    <g id="zone-abdomen" class="body-zone clickable">
+                        <rect x="115" y="140" width="70" height="70" rx="8" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                        <line x1="150" y1="155" x2="150" y2="200" stroke="#00d9ff" stroke-width="1" opacity="0.3"/>
+                        <line x1="130" y1="175" x2="170" y2="175" stroke="#00d9ff" stroke-width="1" opacity="0.3"/>
+                    </g>
+                    
+                    <!-- Glúteos -->
+                    <g id="zone-glutes" class="body-zone clickable">
+                        <ellipse cx="135" cy="225" rx="20" ry="25" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                        <ellipse cx="165" cy="225" rx="20" ry="25" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                    </g>
+                    
+                    <!-- Muslos -->
+                    <g id="zone-thighs" class="body-zone clickable">
+                        <rect x="115" y="250" width="30" height="100" rx="15" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                        <rect x="155" y="250" width="30" height="100" rx="15" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                        <text x="150" y="305" text-anchor="middle" fill="white" font-size="25">🦵</text>
+                    </g>
+                    
+                    <!-- Rodillas (Advertencia) -->
+                    <circle cx="130" cy="355" r="12" fill="#ffa500" opacity="0.3"/>
+                    <circle cx="170" cy="355" r="12" fill="#ffa500" opacity="0.3"/>
+                    
+                    <!-- Gemelos -->
+                    <g id="zone-calves" class="body-zone clickable">
+                        <rect x="120" y="370" width="25" height="80" rx="12" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                        <rect x="155" y="370" width="25" height="80" rx="12" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
+                    </g>
+                    
+                    <!-- Espinillas (Zona Sensible) -->
+                    <line x1="127" y1="380" x2="127" y2="440" stroke="#ff4444" stroke-width="2" opacity="0.6"/>
+                    <line x1="167" y1="380" x2="167" y2="440" stroke="#ff4444" stroke-width="2" opacity="0.6"/>
+                    
+                    <!-- Tobillos -->
+                    <ellipse cx="132" cy="455" rx="10" ry="8" fill="#1a1f35" stroke="#00d9ff" stroke-width="1"/>
+                    <ellipse cx="168" cy="455" rx="10" ry="8" fill="#1a1f35" stroke="#00d9ff" stroke-width="1"/>
+                </svg>
+            </div>
+
+            <!-- Bottom Sheet de Información de Zona -->
+            <div id="zoneSheet" class="bottom-sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-content">
+                    <h3 id="zoneName">Selecciona una zona</h3>
+                    <div id="zoneInfo">
+                        <!-- Contenido dinámico -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA 4: PROGRESO FOTOGRÁFICO -->
+        <section id="progress" class="view">
+            <div class="card">
+                <div class="card-header">
+                    <span class="material-icons">photo_camera</span>
+                    <h3>Comparador Visual</h3>
+                </div>
+                <p class="section-description">Usa el modo "Ghost Overlay" para comparar tu progreso</p>
+            </div>
+
+            <div class="photo-tabs">
+                <button class="tab-btn active" data-tab="capture">
+                    <span class="material-icons">add_a_photo</span>
+                    Nueva Foto
+                </button>
+                <button class="tab-btn" data-tab="gallery">
+                    <span class="material-icons">collections</span>
+                    Galería
+                </button>
+                <button class="tab-btn" data-tab="compare">
+                    <span class="material-icons">compare</span>
+                    Comparar
+                </button>
+            </div>
+
+            <!-- Tab: Captura -->
+            <div id="captureTab" class="tab-content active">
+                <div class="camera-container">
+                    <video id="cameraPreview" autoplay playsinline></video>
+                    <canvas id="ghostOverlay" class="ghost-layer"></canvas>
+                    <div class="camera-controls">
+                        <div class="control-group">
+                            <label>
+                                <input type="checkbox" id="enableGhost">
+                                <span>Activar Modo Fantasma</span>
+                            </label>
+                            <label>
+                                <span>Opacidad: <span id="opacityValue">30</span>%</span>
+                                <input type="range" id="ghostOpacity" min="0" max="100" value="30">
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label>Zona a fotografiar:</label>
+                            <select id="photoZone">
+                                <option value="chest">Pecho</option>
+                                <option value="abdomen">Abdomen</option>
+                                <option value="shoulders">Hombros</option>
+                                <option value="thighs">Muslos</option>
+                                <option value="calves">Gemelos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="capture-buttons">
+                        <button id="startCamera" class="btn-primary">
+                            <span class="material-icons">videocam</span>
+                            Activar Cámara
+                        </button>
+                        <button id="capturePhoto" class="btn-primary" style="display: none;">
+                            <span class="material-icons">camera</span>
+                            Capturar
+                        </button>
+                        <button id="stopCamera" class="btn-secondary" style="display: none;">
+                            <span class="material-icons">videocam_off</span>
+                            Detener
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Galería -->
+            <div id="galleryTab" class="tab-content">
+                <div id="photoGallery" class="photo-grid">
+                    <div class="empty-state">
+                        <span class="material-icons">photo_library</span>
+                        <p>No hay fotos guardadas</p>
+                        <small>Captura tu primera foto de referencia</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Comparador -->
+            <div id="compareTab" class="tab-content">
+                <div class="compare-container">
+                    <div class="compare-selector">
+                        <div class="compare-column">
+                            <h4>Foto Antigua</h4>
+                            <select id="compareOld" class="compare-select">
+                                <option value="">Seleccionar...</option>
+                            </select>
+                            <canvas id="compareCanvasOld" class="compare-canvas"></canvas>
+                        </div>
+                        <div class="compare-column">
+                            <h4>Foto Nueva</h4>
+                            <select id="compareNew" class="compare-select">
+                                <option value="">Seleccionar...</option>
+                            </select>
+                            <canvas id="compareCanvasNew" class="compare-canvas"></canvas>
+                        </div>
+                    </div>
+                    <div class="compare-controls">
+                        <button id="generateFlicker" class="btn-primary">
+                            <span class="material-icons">animation</span>
+                            Generar Animación
+                        </button>
+                    </div>
+                    <div id="flickerResult" class="flicker-result" style="display: none;">
+                        <canvas id="flickerCanvas"></canvas>
+                        <button id="downloadFlicker" class="btn-secondary">
+                            <span class="material-icons">download</span>
+                            Descargar GIF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA 5: AJUSTES -->
+        <section id="settings" class="view">
+            <div class="card">
+                <div class="card-header">
+                    <span class="material-icons">settings</span>
+                    <h3>Configuración</h3>
+                </div>
+                
+                <div class="settings-group">
+                    <h4>Perfil de Usuario</h4>
+                    <div class="setting-item">
+                        <label>Tipo de piel (Fitzpatrick)</label>
+                        <select id="settingsSkinType">
+                            <option value="1">Tipo I - Muy clara</option>
+                            <option value="2">Tipo II - Clara</option>
+                            <option value="3" selected>Tipo III - Media</option>
+                            <option value="4">Tipo IV - Olivácea</option>
+                            <option value="5">Tipo V - Oscura</option>
+                            <option value="6">Tipo VI - Muy oscura</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Tipo de vello</label>
+                        <select id="settingsHairType">
+                            <option value="thin">Fino/Claro</option>
+                            <option value="medium">Medio</option>
+                            <option value="thick" selected>Grueso/Oscuro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h4>Notificaciones</h4>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="notificationsEnabled" checked>
+                            <span>Activar recordatorios</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>Anticipación del recordatorio</label>
+                        <select id="notificationTiming">
+                            <option value="1">1 día antes</option>
+                            <option value="2" selected>2 días antes</option>
+                            <option value="3">3 días antes</option>
+                        </select>
+                    </div>
+                    <button id="testNotification" class="btn-secondary">
+                        <span class="material-icons">notifications</span>
+                        Probar Notificación
+                    </button>
+                </div>
+
+                <div class="settings-group">
+                    <h4>Datos y Privacidad</h4>
+                    <div class="setting-item">
+                        <button id="exportData" class="btn-secondary btn-block">
+                            <span class="material-icons">download</span>
+                            Exportar Copia de Seguridad
+                        </button>
+                    </div>
+                    <div class="setting-item">
+                        <button id="importData" class="btn-secondary btn-block">
+                            <span class="material-icons">upload</span>
+                            Importar Datos
+                        </button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                    </div>
+                    <div class="setting-item warning">
+                        <button id="clearData" class="btn-danger btn-block">
+                            <span class="material-icons">delete_forever</span>
+                            Borrar Todos los Datos
+                        </button>
+                        <small>⚠️ Esta acción no se puede deshacer</small>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h4>Información</h4>
+                    <div class="setting-item">
+                        <span>Versión de la App</span>
+                        <span>1.0.0</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Almacenamiento usado</span>
+                        <span id="storageUsed">Calculando...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal de Sesión Activa -->
+    <div id="sessionModal" class="modal" style="display: none;">
+        <div class="modal-content session-active">
+            <div class="session-header">
+                <h2 id="sessionTitle">Sesión: Tren Inferior</h2>
+                <button id="closeSession" class="icon-btn">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            
+            <div class="session-timer">
+                <span class="material-icons">timer</span>
+                <div id="sessionTime" class="timer-display">00:00</div>
+            </div>
+
+            <div class="zone-checklist" id="sessionChecklist">
+                <!-- Se genera dinámicamente -->
+            </div>
+
+            <div class="session-notes">
+                <label>Notas de la sesión (opcional):</label>
+                <textarea id="sessionNotes" placeholder="Ej: Nivel 5 en muslos, sensación normal"></textarea>
+            </div>
+
+            <button id="completeSession" class="btn-primary btn-large">
+                <span class="material-icons">check_circle</span>
+                Completar Sesión
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/db.js"></script>
+    <script src="/js/calendar.js"></script>
+    <script src="/js/weather.js"></script>
+    <script src="/js/camera.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
