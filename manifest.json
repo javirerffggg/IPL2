@@ -2,22 +2,22 @@
   "name": "IPL Tracker - Gestión Inteligente",
   "short_name": "IPL Tracker",
   "description": "Seguimiento de tratamiento IPL con calendario inteligente, asistente de zonas y comparador visual",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0a0e1a",
   "theme_color": "#00d9ff",
   "orientation": "portrait",
-  "scope": "/",
+  "scope": "./",
   "lang": "es",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "./icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -28,12 +28,12 @@
   "shortcuts": [
     {
       "name": "Nueva Sesión",
-      "url": "/?action=session",
+      "url": "./?action=session",
       "description": "Iniciar sesión de tratamiento"
     },
     {
       "name": "Calendario",
-      "url": "/?action=calendar",
+      "url": "./?action=calendar",
       "description": "Ver calendario de sesiones"
     }
   ]
