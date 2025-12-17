@@ -1,14 +1,14 @@
 const CACHE_NAME = 'ipl-tracker-v1.0.0';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/css/styles.css',
-  '/js/app.js',
-  '/js/db.js',
-  '/js/calendar.js',
-  '/js/camera.js',
-  '/js/weather.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './css/styles.css',
+  './js/app.js',
+  './js/db.js',
+  './js/calendar.js',
+  './js/camera.js',
+  './js/weather.js',
+  './manifest.json'
 ];
 
 // Instalación del Service Worker
@@ -44,7 +44,7 @@ self.addEventListener('fetch', event => {
   if (event.request.url.includes('api.open-meteo.com')) {
     event.respondWith(
       fetch(event.request)
-        .catch(() => caches.match('/offline.html'))
+        .catch(() => caches.match('./offline.html'))
     );
     return;
   }
@@ -72,8 +72,8 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   const options = {
     body: event.data ? event.data.text() : 'Recordatorio de sesión IPL',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/badge-72.png',
+    icon: './icons/icon-192.png',
+    badge: './icons/badge-72.png',
     vibrate: [200, 100, 200],
     data: {
       dateOfArrival: Date.now(),
@@ -83,12 +83,12 @@ self.addEventListener('push', event => {
       {
         action: 'open',
         title: 'Abrir App',
-        icon: '/icons/checkmark.png'
+        icon: './icons/checkmark.png'
       },
       {
         action: 'close',
         title: 'Cerrar',
-        icon: '/icons/cross.png'
+        icon: './icons/cross.png'
       }
     ]
   };
@@ -103,7 +103,7 @@ self.addEventListener('notificationclick', event => {
   
   if (event.action === 'open') {
     event.waitUntil(
-      clients.openWindow('/')
+      clients.openWindow('./')
     );
   }
 });
