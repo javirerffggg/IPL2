@@ -86,11 +86,11 @@ class WeatherService {
       
       // Retornar datos por defecto en caso de error
       return {
-        value: 0,
-        status: 'No disponible',
-        color: '#718096',
-        warning: false,
-        message: 'No se pudo obtener el índice UV. Verifica tu ubicación.',
+        value: '--',
+        status: 'Sin conexión — UV no disponible',
+        color: '#ff4444',
+        warning: true,
+        message: 'Sin conexión a internet o error en la API. No se pudo obtener el índice UV.',
         error: true
       };
     }

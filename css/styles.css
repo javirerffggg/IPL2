@@ -43,6 +43,20 @@
   --spacing-xl: 32px;
 }
 
+/* TEMA CLARO */
+.theme-light {
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #e4e6eb;
+  --text-primary: #1c1e21;
+  --text-secondary: #606770;
+  --text-muted: #8d949e;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
 /* =====================================================
    RESET Y BASE
    ===================================================== */
@@ -912,6 +926,16 @@ body {
   margin-bottom: var(--spacing-md);
 }
 
+.animated-icon {
+  animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+  0% { transform: translateY(0px); opacity: 0.3; }
+  50% { transform: translateY(-10px); opacity: 0.6; color: var(--accent-primary); }
+  100% { transform: translateY(0px); opacity: 0.3; }
+}
+
 /* Comparador */
 .compare-container {
   background: var(--bg-card);
@@ -1157,6 +1181,13 @@ body {
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
+
+.fitz-1 { background: #f5d7c5; }
+.fitz-2 { background: #edc5a8; }
+.fitz-3 { background: #d5a47a; }
+.fitz-4 { background: #ae7d4f; }
+.fitz-5 { background: #8b5a3c; }
+.fitz-6 { background: #5c3c2e; }
 
 .fitz-option span {
   font-size: 1.5rem;

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="IPL Tracker">
@@ -25,6 +25,9 @@
     <!-- Material Icons CDN -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Pantalla de Instalación (iOS) -->
@@ -39,6 +42,12 @@
             </ol>
             <button id="dismissInstall" class="btn-secondary">Entendido</button>
         </div>
+    </div>
+
+    <!-- Update Banner -->
+    <div id="updateBanner" class="warning-banner" style="display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; border-radius: 0; margin: 0; justify-content: center; cursor: pointer; background: var(--accent-primary); color: #000;">
+        <span class="material-icons" style="color: #000;">system_update</span>
+        <p style="color: #000; font-weight: bold;">Nueva versión disponible — Toca para actualizar</p>
     </div>
 
     <!-- Modal de Onboarding -->
@@ -63,7 +72,7 @@
                         <option value="thick" selected>Grueso/Oscuro</option>
                     </select>
                 </div>
-                <button class="btn-primary" onclick="nextOnboardingStep()">Continuar</button>
+                <button id="btnNextStep1" class="btn-primary">Continuar</button>
             </div>
 
             <div class="onboarding-step" data-step="2">
@@ -84,8 +93,8 @@
                     <span class="material-icons">info</span>
                     Recomendamos el modo "Weekend Split": Piernas el sábado, Torso el domingo
                 </p>
-                <button class="btn-secondary" onclick="prevOnboardingStep()">Atrás</button>
-                <button class="btn-primary" onclick="nextOnboardingStep()">Continuar</button>
+                <button id="btnPrevStep2" class="btn-secondary">Atrás</button>
+                <button id="btnNextStep2" class="btn-primary">Continuar</button>
             </div>
 
             <div class="onboarding-step" data-step="3">
@@ -93,27 +102,27 @@
                 <h2>Tipo de Piel (Fitzpatrick)</h2>
                 <p>Selecciona el color que mejor coincida con tu brazo</p>
                 <div id="fitzpatrickSelector" class="fitzpatrick-grid">
-                    <div class="fitz-option" data-type="1" style="background: #f5d7c5;">
+                    <div class="fitz-option fitz-1" data-type="1">
                         <span>I</span>
                         <small>Muy clara</small>
                     </div>
-                    <div class="fitz-option" data-type="2" style="background: #edc5a8;">
+                    <div class="fitz-option fitz-2" data-type="2">
                         <span>II</span>
                         <small>Clara</small>
                     </div>
-                    <div class="fitz-option" data-type="3" style="background: #d5a47a;" class="selected">
+                    <div class="fitz-option fitz-3 selected" data-type="3">
                         <span>III</span>
                         <small>Media</small>
                     </div>
-                    <div class="fitz-option" data-type="4" style="background: #ae7d4f;">
+                    <div class="fitz-option fitz-4" data-type="4">
                         <span>IV</span>
                         <small>Olivácea</small>
                     </div>
-                    <div class="fitz-option" data-type="5" style="background: #8b5a3c;">
+                    <div class="fitz-option fitz-5" data-type="5">
                         <span>V</span>
                         <small>Oscura</small>
                     </div>
-                    <div class="fitz-option" data-type="6" style="background: #5c3c2e;">
+                    <div class="fitz-option fitz-6" data-type="6">
                         <span>VI</span>
                         <small>Muy oscura</small>
                     </div>
@@ -122,8 +131,8 @@
                     <span class="material-icons">tips_and_updates</span>
                     Sube el brillo de tu pantalla al máximo y compara con tu antebrazo
                 </p>
-                <button class="btn-secondary" onclick="prevOnboardingStep()">Atrás</button>
-                <button class="btn-primary" onclick="nextOnboardingStep()">Continuar</button>
+                <button id="btnPrevStep3" class="btn-secondary">Atrás</button>
+                <button id="btnNextStep3" class="btn-primary">Continuar</button>
             </div>
 
             <div class="onboarding-step" data-step="4">
@@ -132,7 +141,7 @@
                 <p>¿Cuándo quieres empezar tu tratamiento?</p>
                 <div class="form-group">
                     <label>Fecha de primera sesión</label>
-                    <input type="date" id="startDate" min="2025-12-17">
+                    <input type="date" id="startDate">
                 </div>
                 <div class="phase-preview">
                     <h3>Tu Plan Personalizado:</h3>
@@ -158,8 +167,8 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn-secondary" onclick="prevOnboardingStep()">Atrás</button>
-                <button class="btn-primary" onclick="completeOnboarding()">¡Empezar!</button>
+                <button id="btnPrevStep4" class="btn-secondary">Atrás</button>
+                <button id="btnCompleteOnboarding" class="btn-primary">¡Empezar!</button>
             </div>
         </div>
     </div>
@@ -296,6 +305,17 @@
                 </div>
             </div>
 
+            <!-- Gráfica de Adherencia -->
+            <div class="card analytics-card">
+                <div class="card-header">
+                    <span class="material-icons">insights</span>
+                    <h3>Adherencia al Tratamiento</h3>
+                </div>
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="adherenceChart"></canvas>
+                </div>
+            </div>
+
             <!-- Estadísticas Rápidas -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -304,12 +324,12 @@
                     <div class="stat-label">Sesiones</div>
                 </div>
                 <div class="stat-card">
-                    <span class="material-icons">schedule</span>
-                    <div class="stat-value" id="totalTime">0h</div>
-                    <div class="stat-label">Tiempo Total</div>
+                    <span class="material-icons">local_fire_department</span>
+                    <div class="stat-value" id="streakCounter">0</div>
+                    <div class="stat-label">Racha (Sem)</div>
                 </div>
                 <div class="stat-card">
-                    <span class="material-icons">local_fire_department</span>
+                    <span class="material-icons">tungsten</span>
                     <div class="stat-value" id="totalShots">0</div>
                     <div class="stat-label">Disparos</div>
                 </div>
@@ -318,6 +338,17 @@
 
         <!-- VISTA 2: CALENDARIO -->
         <section id="calendar" class="view">
+            <!-- Vista Semanal Rápida -->
+            <div class="weekly-view card">
+                <div class="card-header" style="margin-bottom: 8px;">
+                    <span class="material-icons">view_week</span>
+                    <h3 style="font-size: 1rem;">Esta Semana</h3>
+                </div>
+                <div class="weekly-grid" id="weeklyGrid">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
             <div class="calendar-header">
                 <button id="prevMonth" class="icon-btn">
                     <span class="material-icons">chevron_left</span>
@@ -331,19 +362,19 @@
             <!-- Leyenda -->
             <div class="calendar-legend">
                 <div class="legend-item">
-                    <span class="legend-icon legs">🦵</span>
+                    <span class="legend-icon legs material-icons" style="font-size: 1.2rem;">directions_walk</span>
                     <span>Tren Inferior</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-icon torso">👕</span>
+                    <span class="legend-icon torso material-icons" style="font-size: 1.2rem;">accessibility_new</span>
                     <span>Torso</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-icon shoulders">💪</span>
+                    <span class="legend-icon shoulders material-icons" style="font-size: 1.2rem;">fitness_center</span>
                     <span>+ Hombros</span>
                 </div>
                 <div class="legend-item">
-                    <span class="legend-icon rest">💤</span>
+                    <span class="legend-icon rest material-icons" style="font-size: 1.2rem;">bedtime</span>
                     <span>Descanso</span>
                 </div>
             </div>
@@ -363,6 +394,11 @@
                 </div>
                 <div id="detailContent">
                     <!-- Contenido dinámico -->
+                </div>
+                <div style="margin-top: 16px; display: flex; gap: 8px;">
+                    <button id="postponeSessionBtn" class="btn-secondary" style="flex: 1;">
+                        <span class="material-icons">update</span> Posponer
+                    </button>
                 </div>
             </div>
         </section>
@@ -390,7 +426,7 @@
                     <g id="zone-shoulders" class="body-zone clickable">
                         <ellipse cx="115" cy="95" rx="30" ry="20" fill="#2a3f5f" stroke="#ffa500" stroke-width="3" class="zone-highlight"/>
                         <ellipse cx="185" cy="95" rx="30" ry="20" fill="#2a3f5f" stroke="#ffa500" stroke-width="3" class="zone-highlight"/>
-                        <text x="150" y="100" text-anchor="middle" fill="white" font-size="20">💪</text>
+                        <text x="150" y="100" text-anchor="middle" fill="white" font-family="Material Icons" font-size="20">fitness_center</text>
                     </g>
                     
                     <!-- Brazos -->
@@ -402,7 +438,7 @@
                     <!-- Pecho -->
                     <g id="zone-chest" class="body-zone clickable">
                         <rect x="110" y="80" width="80" height="60" rx="10" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
-                        <text x="150" y="115" text-anchor="middle" fill="white" font-size="20">👕</text>
+                        <text x="150" y="115" text-anchor="middle" fill="white" font-family="Material Icons" font-size="20">accessibility_new</text>
                     </g>
                     
                     <!-- Abdomen -->
@@ -422,7 +458,7 @@
                     <g id="zone-thighs" class="body-zone clickable">
                         <rect x="115" y="250" width="30" height="100" rx="15" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
                         <rect x="155" y="250" width="30" height="100" rx="15" fill="#2a3f5f" stroke="#00d9ff" stroke-width="2" class="zone-highlight"/>
-                        <text x="150" y="305" text-anchor="middle" fill="white" font-size="25">🦵</text>
+                        <text x="150" y="305" text-anchor="middle" fill="white" font-family="Material Icons" font-size="25">directions_walk</text>
                     </g>
                     
                     <!-- Rodillas (Advertencia) -->
@@ -480,6 +516,10 @@
                     <span class="material-icons">compare</span>
                     Comparar
                 </button>
+                <button class="tab-btn" data-tab="stats">
+                    <span class="material-icons">query_stats</span>
+                    Analítica
+                </button>
             </div>
 
             <!-- Tab: Captura -->
@@ -530,7 +570,7 @@
             <div id="galleryTab" class="tab-content">
                 <div id="photoGallery" class="photo-grid">
                     <div class="empty-state">
-                        <span class="material-icons">photo_library</span>
+                        <span class="material-icons animated-icon">photo_library</span>
                         <p>No hay fotos guardadas</p>
                         <small>Captura tu primera foto de referencia</small>
                     </div>
@@ -561,6 +601,10 @@
                             <span class="material-icons">animation</span>
                             Generar Animación
                         </button>
+                        <button id="exportProgress" class="btn-secondary" style="margin-top: 10px;">
+                            <span class="material-icons">share</span>
+                            Compartir Progreso (Imagen)
+                        </button>
                     </div>
                     <div id="flickerResult" class="flicker-result" style="display: none;">
                         <canvas id="flickerCanvas"></canvas>
@@ -568,6 +612,29 @@
                             <span class="material-icons">download</span>
                             Descargar GIF
                         </button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Analítica Avanzada -->
+            <div id="statsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="material-icons">show_chart</span>
+                        <h3>Evolución de Intensidad por Zona</h3>
+                    </div>
+                    <div id="intensityChartsContainer" style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
+                        <p style="text-align:center; color: var(--text-muted); width:100%;">Guarda sesiones para ver los gráficos de intensidad.</p>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 16px;">
+                    <div class="card-header">
+                        <span class="material-icons">report_problem</span>
+                        <h3>Zonas Problemáticas</h3>
+                    </div>
+                    <div id="problematicZonesContainer">
+                        <p style="text-align:center; color: var(--text-muted);">Calculando adherencia por zona...</p>
                     </div>
                 </div>
             </div>
@@ -600,6 +667,17 @@
                             <option value="thin">Fino/Claro</option>
                             <option value="medium">Medio</option>
                             <option value="thick" selected>Grueso/Oscuro</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Disparos Totales del Dispositivo</label>
+                        <input type="number" id="settingsMaxShots" value="300000" style="width: 100px; padding: 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: var(--bg-secondary); color: var(--text-primary); text-align: right;">
+                    </div>
+                    <div class="setting-item">
+                        <label>Tema Visual</label>
+                        <select id="settingsTheme">
+                            <option value="dark" selected>Modo Oscuro</option>
+                            <option value="light">Modo Claro</option>
                         </select>
                     </div>
                 </div>
@@ -654,7 +732,7 @@
                     <h4>Información</h4>
                     <div class="setting-item">
                         <span>Versión de la App</span>
-                        <span>1.0.0</span>
+                        <span id="appVersionDisplay">1.0.0</span>
                     </div>
                     <div class="setting-item">
                         <span>Almacenamiento usado</span>
@@ -685,9 +763,13 @@
                 <!-- Se genera dinámicamente -->
             </div>
 
+            <div class="session-intensities" id="sessionIntensities" style="margin-bottom: 15px;">
+                <!-- Se genera dinámicamente -->
+            </div>
+
             <div class="session-notes">
-                <label>Notas de la sesión (opcional):</label>
-                <textarea id="sessionNotes" placeholder="Ej: Nivel 5 en muslos, sensación normal"></textarea>
+                <label>Notas adicionales (opcional):</label>
+                <textarea id="sessionNotes" placeholder="Ej: sensación normal, algo de enrojecimiento"></textarea>
             </div>
 
             <button id="completeSession" class="btn-primary btn-large">
